@@ -187,7 +187,7 @@ func (s *signatureV1) export(w io.Writer) error {
 	return err
 }
 
-// utilitiy functions
+// utility functions
 func getPublicKeyV1(pub []byte) (PublicKey, error) {
 	if len(pub) < sizeVersion+sizeCheckv1+ed25519.PublicKeySize {
 		return nil, ErrInvalidPubFormat

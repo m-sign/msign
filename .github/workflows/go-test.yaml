@@ -9,15 +9,15 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
     - name: Install Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v6
       with:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
     - name: Test
       run: go test -cover -coverprofile=coverage -covermode=atomic ./...
     - name: Upload code coverage
       if: matrix.platform == 'ubuntu-latest' && matrix.go-version=='stable'
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         file: ./coverage
