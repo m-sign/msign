@@ -41,7 +41,7 @@ const (
 // helpers
 
 func LimitWriter(w io.Writer, limit int64) io.Writer {
-	return &LimitedWriter{W: w, N: limit, Err: ErrUknownType}
+	return &LimitedWriter{W: w, N: limit, Err: ErrUnknownType}
 }
 
 type LimitedWriter struct {
@@ -359,17 +359,17 @@ func TestExport_PublicKey(t *testing.T) {
 	}
 
 	err = Export(LimitWriter(buf, 0), key)
-	if err != ErrUknownType {
+	if err != ErrUnknownType {
 		t.Errorf("Export() with public key failed: %v", err)
 	}
 
 	err = Export(LimitWriter(buf, 4), key)
-	if err != ErrUknownType {
+	if err != ErrUnknownType {
 		t.Errorf("Export() with public key failed: %v", err)
 	}
 
 	err = Export(LimitWriter(buf, 16), key)
-	if err != ErrUknownType {
+	if err != ErrUnknownType {
 		t.Errorf("Export() with public key failed: %v", err)
 	}
 }
@@ -392,17 +392,17 @@ func TestExport_PrivateKey(t *testing.T) {
 	}
 
 	err = Export(LimitWriter(buf, 0), key)
-	if err != ErrUknownType {
+	if err != ErrUnknownType {
 		t.Errorf("Export() with private key failed: %v", err)
 	}
 
 	err = Export(LimitWriter(buf, 4), key)
-	if err != ErrUknownType {
+	if err != ErrUnknownType {
 		t.Errorf("Export() with private key failed: %v", err)
 	}
 
 	err = Export(LimitWriter(buf, 16), key)
-	if err != ErrUknownType {
+	if err != ErrUnknownType {
 		t.Errorf("Export() with private key failed: %v", err)
 	}
 }
@@ -425,17 +425,17 @@ func TestExport_Signature(t *testing.T) {
 	}
 
 	err = Export(LimitWriter(buf, 0), sig)
-	if err != ErrUknownType {
+	if err != ErrUnknownType {
 		t.Errorf("Export() with signature failed: %v", err)
 	}
 
 	err = Export(LimitWriter(buf, 4), sig)
-	if err != ErrUknownType {
+	if err != ErrUnknownType {
 		t.Errorf("Export() with signature failed: %v", err)
 	}
 
 	err = Export(LimitWriter(buf, 16), sig)
-	if err != ErrUknownType {
+	if err != ErrUnknownType {
 		t.Errorf("Export() with signature failed: %v", err)
 	}
 }
@@ -448,7 +448,7 @@ func TestExport_Bad(t *testing.T) {
 
 	buf := new(bytes.Buffer)
 	err = Export(buf, nil)
-	if err != ErrUknownType {
+	if err != ErrUnknownType {
 		t.Errorf("Export() with signature failed: %v", err)
 	}
 

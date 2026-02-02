@@ -29,7 +29,7 @@ var (
 	ErrInvalidKeyFormat = errors.New("invalid private key format")
 	ErrInvalidSignature = errors.New("invalid signature")
 	ErrKeyIdMismatch    = errors.New("invalid signature (key id mismatch)")
-	ErrUknownType       = errors.New("unknown export type")
+	ErrUnknownType      = errors.New("unknown export type")
 	ErrNilWriter        = errors.New("nil writer")
 	ErrNilReader        = errors.New("nil reader")
 )
@@ -149,5 +149,5 @@ func Export(w io.Writer, item any) error {
 		return i.export(w)
 	}
 
-	return ErrUknownType
+	return ErrUnknownType
 }
