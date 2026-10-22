@@ -8,6 +8,6 @@ assignees: ''
 ---
 
 Confirm by changing [ ] to [x] below:
-- [ ] I've gone though [Wiki](https://github.com/m-sign/msign/wiki)
+- [ ] I've read the [README](https://github.com/m-sign/msign#readme) and the [package documentation](https://pkg.go.dev/github.com/m-sign/msign)
 
 **Describe the question**

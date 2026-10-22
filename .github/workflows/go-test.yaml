@@ -1,23 +1,92 @@
-on: [push, pull_request]
 name: Test
+on:
+  push:
+  pull_request:
+  workflow_call:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         go-version: [oldstable, stable]
-        platform: [windows-latest, ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.platform }}
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-    - name: Install Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: ${{ matrix.go-version }}
-    - name: Checkout code
-      uses: actions/checkout@v5
-    - name: Test
-      run: go test -cover -coverprofile=coverage -covermode=atomic ./...
-    - name: Upload code coverage
-      if: matrix.platform == 'ubuntu-latest' && matrix.go-version=='stable'
-      uses: codecov/codecov-action@v5
-      with:
-        file: ./coverage
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Check formatting
+        if: runner.os == 'Linux'
+        run: test -z "$(gofmt -s -l .)" || { gofmt -s -l .; exit 1; }
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test -count=1 -coverprofile=coverage.out ./...
+      - name: Test with race detector
+        if: runner.os == 'Linux'
+        run: go test -race -count=1 ./...
+      - name: Upload coverage
+        if: runner.os == 'Linux' && matrix.go-version == 'stable'
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: ./coverage.out
+          token: ${{ secrets.CODECOV_TOKEN }}
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.14.0
+  vuln:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+  fuzz-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+      - name: Fuzz each target briefly
+        run: |
+          for target in $(go test -list '^Fuzz' . | grep '^Fuzz'); do
+            go test -run='^$' -fuzz="^${target}\$" -fuzztime=15s .
+          done
+  vectors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compare test vectors with the published specification
+        # Pin to the specs tag that testdata/vectors-v1.json was copied from (see testdata/README.md).
+        if: ${{ vars.SPECS_VECTORS_REF != '' }}
+        env:
+          SPECS_REF: ${{ vars.SPECS_VECTORS_REF }}
+        run: |
+          curl -fsSL "https://raw.githubusercontent.com/m-sign/specs/${SPECS_REF}/test-vectors/v1.json" -o /tmp/v1.json
+          cmp /tmp/v1.json testdata/vectors-v1.json

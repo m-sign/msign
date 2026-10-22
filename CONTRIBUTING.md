@@ -17,9 +17,10 @@ The project uses the GitHub infrastructure (see the
 [project page](https://github.com/m-sign)) for all related discussions.
 
 If you want to find an area that currently needs improving have a look at the
-open issues listed on the
-[issues](https://github.com/m-sign/go/issues) page](https://github.com/m-sign/go/issues). This is also the place
-for discussing enhancement to the tools.
+open [issues](https://github.com/m-sign/msign/issues). This is also the place
+for discussing enhancements to the module.
+
+Security issues must not be reported as issues; see [SECURITY.md](SECURITY.md).
 
 
 Reporting Bugs
@@ -30,7 +31,7 @@ idea to describe in detail how to reproduce the bug (when you know how), what
 environment was used and so on. Please tell us at least the following things:
 
  * What's the version of the module you used?
- * What commands did you execute to get to where the bug occurred?
+ * What code did you run to get to where the bug occurred?
  * What did you expect?
  * What happened instead?
  * Are you aware of a way to reproduce the bug?
@@ -41,17 +42,30 @@ corrected!
 Development Environment
 =======================
 
-The repository contains the code written for the project in the directories
-`cmd/`, `internal/` and the root directory.
+The module is a single Go package in the repository root. It uses only the Go
+standard library.
 
-Make sure you have the minimum required Go version installed. Clone the repo
-(without having `$GOPATH` set) and `cd` into the directory:
+The project supports the two most recent Go releases; the `go` directive in
+`go.mod` names the older of the two. Clone the repo and run the tests:
 
-    $ unset GOPATH
-    $ git clone https://github.com/m-sign/go
-    $ cd go
+    $ git clone https://github.com/m-sign/msign
+    $ cd msign
+    $ go test ./...
 
-Then use the `go build` tool to build the module
+To work on this module together with the [tools](https://github.com/m-sign/tools)
+repository, clone both side by side and create a `go.work` file in the parent
+directory (do not commit it, and never commit `replace` directives):
+
+    go 1.26
+
+    use (
+    	./msign
+    	./tools
+    )
+
+The format is defined in [m-sign/specs](https://github.com/m-sign/specs).
+`testdata/vectors-v1.json` is a copy of the specification's test vectors; see
+`testdata/README.md` before changing it. The v1 byte format is frozen.
 
 
 Providing Patches
@@ -87,10 +101,9 @@ down to the following steps:
     automatically added to the pull request.
 
  7. If your pull request changes anything that users should be aware of
-    (a bugfix, a new feature, ...) please provide information about these changes.
-    It will be used in the announcement of the next stable release. While
-    writing, ask yourself: If I were the user, what would I need to be aware
-    of with this change?
+    (a bugfix, a new feature, ...) please add it to the `[Unreleased]` section
+    of [CHANGELOG.md](CHANGELOG.md). While writing, ask yourself: If I were the
+    user, what would I need to be aware of with this change?
 
  8. Once your code looks good and passes all the tests, we'll merge it. Thanks
     a lot for your contribution!
@@ -98,21 +111,18 @@ down to the following steps:
 Please provide the patches for each bug or feature in a separate branch and
 open up a pull request for each, as this simplifies discussion and merging.
 
-The project uses the `gofmt` tool for Go source indentation, so please
-run
+Every pull request must pass the same checks as CI:
 
-    gofmt -w **/*.go
+    $ test -z "$(gofmt -s -l .)"
+    $ go vet ./...
+    $ golangci-lint run ./...          # golangci-lint v2.14 or later
+    $ go test -race -count=1 ./...
+    $ go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
-in the project root directory before committing. For each Pull Request, the
-formatting is tested with `gofmt` for the latest stable version of Go.
+CI runs the tests on Linux, macOS and Windows, and runs each fuzz target
+briefly. To fuzz locally, run for example:
 
-For each pull request, several different systems run the integration tests on
-Linux, macOS and Windows. We won't merge any code that does not pass all tests
-for all systems, so when a test fails, try to find out what's wrong and fix
-it. If you need help on this, please leave a comment in the pull request, and
-we'll be glad to assist. Having a PR with failing integration tests is nothing
-to be ashamed of. In contrast, that happens regularly for all of us. That's
-what the tests are there for.
+    $ go test -run='^$' -fuzz='^FuzzParsePublicKey$' -fuzztime=1m .
 
 Git Commits
 -----------
@@ -133,9 +143,9 @@ allows staging and committing only some changes.
 Code Review
 ===========
 
-The project encourages actively reviewing the code, as it will store
-your precious data, so it's common practice to receive comments on provided
-patches.
+The project encourages actively reviewing the code, as it protects the keys
+and signatures of its users, so it's common practice to receive comments on
+provided patches.
 
 If you are reviewing other contributor's code please consider the following
 when reviewing:

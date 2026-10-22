@@ -10,6 +10,8 @@ assignees: ''
 **Describe the bug**
 A clear and concise description of what the bug is.
 
+**Version of msign (`go list -m github.com/m-sign/msign`)?**
+
 **Version of Go (`go version`)?**
 
 **To Reproduce (observed behavior)**
